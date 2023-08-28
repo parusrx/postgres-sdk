@@ -1,0 +1,9 @@
+root = true
+
+# All files
+[*]
+indent_style = space
+
+# SQL files
+[*.sql]
+indent_size = 2
