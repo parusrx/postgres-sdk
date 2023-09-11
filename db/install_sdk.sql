@@ -69,7 +69,7 @@ CREATE OR REPLACE FUNCTION p_prxmbdata_binsert(
 BEGIN
   INSERT INTO prxmbdata (id, request) VALUES (sid, brequest);
 END
-$$ LANGUAGE plpgsql VOLATILEs SECURITY DEFINER;
+$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 COMMENT ON FUNCTION p_prxmbdata_binsert(varchar, bytea) IS 'Базовое добавление записи шины сообщений';
 
