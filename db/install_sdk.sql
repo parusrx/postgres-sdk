@@ -302,7 +302,7 @@ COMMENT ON FUNCTION pkg_prxmb$set_response(varchar, bytea) IS 'Добавлен�
 -- NOTE:
 --   This function is used to send a message to the message bus and wait for a response.
 -- ************************************************************************************************
-CREATE OR REPLACE PROCEDURE pkg_prxmb$send(
+CREATE OR REPLACE FUNCTION pkg_prxmb$send(
   nflag_smart     numeric,        -- признак генерации исключения (0 - да, 1 - нет)
   stopic          varchar,        -- очередь сообщений
   sid             varchar,        -- идентификатор сообщения
