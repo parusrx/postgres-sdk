@@ -46,7 +46,7 @@ BEGIN
 
   RETURN NEW;
 END
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 COMMENT ON FUNCTION t_prxmbdata_binsert() IS 'Инициализация данных нового сообщения';
 
@@ -69,7 +69,7 @@ CREATE OR REPLACE FUNCTION p_prxmbdata_binsert(
 BEGIN
   INSERT INTO prxmbdata (id, request) VALUES (sid, brequest);
 END
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql VOLATILEs SECURITY DEFINER;
 
 COMMENT ON FUNCTION p_prxmbdata_binsert(varchar, bytea) IS 'Базовое добавление записи шины сообщений';
 
@@ -91,7 +91,7 @@ BEGIN
       true
     );
 END
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 COMMENT ON FUNCTION p_prxmbdata_binsert_at(varchar, bytea) IS 'Базовое добавление записи шины сообщений (в автономной транзакции)';
 
@@ -113,7 +113,7 @@ BEGIN
     PERFORM p_exception(0, 'Запись шины сообщений с идентификатором "%s" не найдена.', sid);
   END IF;
 END
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 COMMENT ON FUNCTION p_prxmbdata_bupdate(varchar, bytea, numeric, varchar) IS 'Базовое исправление записи шины сообщений';
 
@@ -140,7 +140,7 @@ BEGIN
       true
     );
 END
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 COMMENT ON FUNCTION p_prxmbdata_bupdate_at(varchar, bytea, numeric, varchar) IS 'Базовое исправление записи шины сообщений (в автономной транзакции)';
 
@@ -232,7 +232,7 @@ COMMENT ON FUNCTION pkg_prxmq$send(varchar, varchar) IS 'Отправка соо
 CREATE OR REPLACE FUNCTION pkg_prxmb$get_request(
   sid             varchar,        -- идентификатор сообщения
   out brequest    bytea           -- тело запроса
-) RETURNS void AS $$
+) AS $$
 BEGIN
   SELECT request INTO brequest FROM prxmbdata WHERE id = sid;
 
@@ -252,7 +252,7 @@ COMMENT ON FUNCTION pkg_prxmb$get_request(varchar, out bytea) IS 'Получен
 CREATE OR REPLACE FUNCTION pkg_prxmb$set_request(
   brequest        bytea,          -- тело запроса
   out sid         varchar         -- идентификатор сообщения
-) RETURNS void AS $$
+) AS $$
 BEGIN
   sid := f_sys_guid();
   PERFORM p_prxmbdata_binsert_at(sid, brequest);
@@ -269,7 +269,7 @@ COMMENT ON FUNCTION pkg_prxmb$set_request(bytea, out varchar) IS 'Добавле
 CREATE OR REPLACE FUNCTION pkg_prxmb$get_response(
   sid             varchar,        -- идентификатор сообщения
   out bresponse   bytea           -- тело ответа
-) RETURNS void AS $$
+) AS $$
 BEGIN
   SELECT response INTO bresponse FROM prxmbdata WHERE id = sid;
 
