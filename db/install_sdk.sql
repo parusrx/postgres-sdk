@@ -91,7 +91,7 @@ BEGIN
       true
     );
 END
-$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 COMMENT ON FUNCTION p_prxmbdata_binsert_at(varchar, bytea) IS 'Базовое добавление записи шины сообщений (в автономной транзакции)';
 
@@ -140,7 +140,7 @@ BEGIN
       true
     );
 END
-$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 COMMENT ON FUNCTION p_prxmbdata_bupdate_at(varchar, bytea, numeric, varchar) IS 'Базовое исправление записи шины сообщений (в автономной транзакции)';
 
@@ -184,7 +184,7 @@ EXCEPTION
     PERFORM p_exception(0, 'Не удалось поставить сообщение в очередь: %s.', sqlerrm);
 END
 $$
-LANGUAGE plpgsql STABLE SECURITY DEFINER;
+LANGUAGE plpgsql IMMUTABLE SECURITY DEFINER;
 
 COMMENT ON FUNCTION pkg_prxmq_int$send(varchar, varchar, varchar, varchar, varchar) IS 'Отправка сообщения в очередь';
 
