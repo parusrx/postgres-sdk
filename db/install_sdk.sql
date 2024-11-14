@@ -107,7 +107,7 @@ CREATE OR REPLACE FUNCTION p_prxmbdata_bupdate(
   snote           varchar         -- примечание
 ) RETURNS void AS $$
 BEGIN
-  UPDATE prxmbdata SET response = bresponse, status = nstatus, note = snote WHERE id = sid;
+  UPDATE prxmbdata SET response = bresponse, status = nstatus, note = substr(snote, 1, 4000) WHERE id = sid;
 
   IF NOT FOUND THEN
     PERFORM p_exception(0, 'Запись шины сообщений с идентификатором "%s" не найдена.', sid);
@@ -158,10 +158,11 @@ CREATE OR REPLACE FUNCTION pkg_prxmq_int$send(
                     DEFAULT NULL  -- параметры URL
 ) RETURNS void AS $$
 DECLARE
-  rrequest        http_request;
-  rresponse       http_response;
+  rrequest        public.http_request;
+  rresponse       public.http_response;
   surl            varchar(2000) := sbase_url;
   sresponse_val   varchar(2000);
+  vsearch_path    text;
 BEGIN
   IF surl_params IS NOT NULL THEN
     surl := surl || '/' || surl_params;
@@ -172,19 +173,26 @@ BEGIN
   rrequest.content_type := scontent_type;
   rrequest.content := scontent;
 
-  rresponse := http(rrequest);
+  vsearch_path := array_to_string(current_schemas(false), ',');
+  EXECUTE 'SET search_path TO ' || vsearch_path || ', public';
+
+  BEGIN
+    rresponse := public.http(rrequest);
+  EXCEPTION
+    WHEN OTHERS THEN
+      PERFORM p_exception(0, 'Не удалось отправить сообщение в очередь: %s.', sqlerrm);
+  END;
+
+  EXECUTE 'SET search_path TO ' || vsearch_path;
 
   IF rresponse.status NOT IN (200, 201, 202) THEN
     PERFORM p_exception(0, 'Внутренняя ошибка обработки запроса: %s.', to_char(rresponse.status));
   END IF;
 
   sresponse_val := rresponse.content;
-EXCEPTION
-  WHEN OTHERS THEN
-    PERFORM p_exception(0, 'Не удалось поставить сообщение в очередь: %s.', sqlerrm);
 END
 $$
-LANGUAGE plpgsql IMMUTABLE SECURITY DEFINER;
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 COMMENT ON FUNCTION pkg_prxmq_int$send(varchar, varchar, varchar, varchar, varchar) IS 'Отправка сообщения в очередь';
 
@@ -220,7 +228,7 @@ BEGIN
 
   PERFORM pkg_prxmq_int$send(sbase_url, 'POST', 'application/json', pkg_prxmq$to_json(stopic, smessage));
 END
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 COMMENT ON FUNCTION pkg_prxmq$send(varchar, varchar) IS 'Отправка сообщения в очередь';
 
@@ -349,7 +357,7 @@ BEGIN
 END
 $$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-COMMENT ON PROCEDURE pkg_prxmb$send(numeric, varchar, varchar, numeric) IS 'Отправка сообщения в шину сообщений';
+COMMENT ON FUNCTION pkg_prxmb$send(numeric, varchar, varchar, numeric) IS 'Отправка сообщения в шину сообщений';
 
 -- ************************************************************************************************
 -- CREATE FUNCTION pkg_prxmb$set_error
